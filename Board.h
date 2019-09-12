@@ -11,7 +11,6 @@
 
 using namespace std;
 
-
 class Board {
 
 public:
@@ -45,13 +44,7 @@ private:
 
     int rowVal[6] = {1,2,2,1,0,0};
     int colVal[7] = {0,1,2,3,2,1,0};
-
-
-
 };
-
-/*int check3s(char mark);
-    int positionPoints(char mark);*/
 
 
 #endif //CONNECT4_BOARD_H
