@@ -1,5 +1,5 @@
 //
-// Created by 1scot on 5/29/2019.
+// Created by Scott Phillips on 5/29/2019.
 //
 
 #include "Game.h"
@@ -9,8 +9,7 @@
  * Game()
  * This constructor initializes a board and fills the searchOrder array
  */
-Game::Game() {
-    Board gameBoard = Board();
+Game::Game():gameBoard(Board()) {
 }
 
 /**
@@ -79,34 +78,50 @@ void Game::makeMove() {
  * @return int representing the column the computer should play in
  */
 int Game::FindBestMove(Board &gameBoard) {
-    Board boardCopy = gameBoard;
+    //Board boardCopy = gameBoard;
     int alpha = -10000;
     int beta = 10000;
+    int depth;
 
-    int depth = 13;//moves ahead to calculate
+    if(gameBoard.getEmptySquares() > 39){
+        return 3;
+    }
+
+    if(gameBoard.getEmptySquares() > 33){
+        depth = 9;
+    } else if(gameBoard.getEmptySquares() > 27){
+        depth = 11;
+    } else {
+        depth = 13;
+    }
+
+    //moves ahead to calculate
     int bestMove = -1;
     int maxEval = -15000;
 
     for (int x = 0; x < Board::COLUMNS; x++) {
 
         //while the column is full and there is another column, increment column #
-        while (x < Board::COLUMNS && !boardCopy.checkCol(searchOrder[x])) {
+        while (x < Board::COLUMNS && !gameBoard.checkCol(searchOrder[x])) {
             x++;
         }
         if (x == Board::COLUMNS) {//break bc this column doesn't exist
             break;
         }
-        int currentRow = getyMove(searchOrder[x], boardCopy);
-        boardCopy.setBoard(searchOrder[x], currentRow, Board::O);
-        int eval = miniMax(boardCopy, depth - 1, alpha, beta);
+        int currentRow = getyMove(searchOrder[x], gameBoard);
+        gameBoard.setBoard(searchOrder[x], currentRow, Board::O);
+        int eval = miniMax(gameBoard, depth - 1, alpha, beta);
             maxEval = max(maxEval, eval);
         if (eval == maxEval) {
             bestMove = searchOrder[x];
         }
-        boardCopy.setBoard(searchOrder[x], currentRow, Board::E);
+        gameBoard.setBoard(searchOrder[x], currentRow, Board::E);
     }
 
     cout << maxEval << "\n";
+    if(maxEval > 1000){
+        cout<<"You're gonna lose"<<"\n";
+    }
 
     return bestMove;
 }
@@ -136,33 +151,34 @@ double Game::evalOf(Board &boardCopy) {
  * @param beta - for pruning
  * @return
  */
-double Game::miniMax(Board boardCopy, int depth, int alpha, int beta) {
+int Game::miniMax(Board &gameBoard, int depth, int alpha, int beta) {
     //if depth has been reached or there is a winner, stop and return evaluation
-    if (depth == 0 || boardCopy.lookForWinner(Board::O) || boardCopy.lookForWinner(Board::X)) {
-        return evalOf(boardCopy);
+    if (depth == 0 || gameBoard.lookForWinner(Board::O) || gameBoard.lookForWinner(Board::X)) {
+        return evalOf(gameBoard);
     }
 
-    if (!boardCopy.humanTurn) {
+    if (!gameBoard.humanTurn) {
         int maxEval = -15000;
         for (int x = 0; x < Board::COLUMNS; x++) {
             //while the column is full and there is another column, increment column #
-            while (x < Board::COLUMNS && !boardCopy.checkCol(searchOrder[x])) {
+            while (x < Board::COLUMNS && !gameBoard.checkCol(searchOrder[x])) {
                 x++;
             }
             if (x == Board::COLUMNS) {
                 break;
             }
-            int currentRow = getyMove(searchOrder[x], boardCopy);
-            boardCopy.setBoard(searchOrder[x], currentRow, Board::O);
-            int eval = miniMax(boardCopy, depth - 1, alpha, beta);
+            int currentRow = getyMove(searchOrder[x], gameBoard);
+            gameBoard.setBoard(searchOrder[x], currentRow, Board::O);
+            int eval = miniMax(gameBoard, depth - 1, alpha, beta);
             maxEval = max(maxEval, eval);
 
             //pruning
             alpha = max(alpha, eval);
             if (beta <= alpha) {
+                gameBoard.setBoard(searchOrder[x], currentRow, Board::E);
                 break;
             }
-            boardCopy.setBoard(searchOrder[x], currentRow, Board::E);
+            gameBoard.setBoard(searchOrder[x], currentRow, Board::E);
         }
 
         return maxEval;
@@ -170,23 +186,24 @@ double Game::miniMax(Board boardCopy, int depth, int alpha, int beta) {
     } else {
         int minEval = 15000;
         for (int x = 0; x < Board::COLUMNS; x++) {
-            while (x < Board::COLUMNS && !boardCopy.checkCol(searchOrder[x])) {
+            while (x < Board::COLUMNS && !gameBoard.checkCol(searchOrder[x])) {
                 x++;
             }
             if (x == Board::COLUMNS) {
                 break;
             }
-            int currentRow = getyMove(searchOrder[x], boardCopy);
-            boardCopy.setBoard(searchOrder[x], currentRow, Board::X);
-            int eval = miniMax(boardCopy, depth - 1, alpha, beta);
+            int currentRow = getyMove(searchOrder[x], gameBoard);
+            gameBoard.setBoard(searchOrder[x], currentRow, Board::X);
+            int eval = miniMax(gameBoard, depth - 1, alpha, beta);
             minEval = min(minEval, eval);
 
             //pruning
             beta = min(beta, eval);
             if (beta <= alpha) {
+                gameBoard.setBoard(searchOrder[x], currentRow, Board::E);
                 break;
             }
-            boardCopy.setBoard(searchOrder[x], currentRow, Board::E);//reset board after testing each move
+            gameBoard.setBoard(searchOrder[x], currentRow, Board::E);//reset board after testing each move
         }
         return minEval;
     }
