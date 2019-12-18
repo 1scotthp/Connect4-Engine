@@ -1,14 +1,13 @@
 //
-// Created by 1scot on 5/29/2019.
+// Created by Scott Phillips 5/29/2019.
 //
 
 #include "Board.h"
 
 
 Board::Board() {
-
-    for (auto & y : board) {
-        for (char & x : y) {
+    for (auto &y : board) {
+        for (char &x : y) {
             x = E;
         }
     }
@@ -17,11 +16,15 @@ Board::Board() {
 void Board::setBoard(int x, int y, char mark) {
     board[ROWS - y - 1][x] = mark;
     humanTurn = !humanTurn;
-    emptySquares -= 1;
+    if (mark == E) {
+        emptySquares++;
+    } else {
+        emptySquares--;
+    }
 }
 
 void Board::printBoard() {
-    for (auto & y : board) {
+    for (auto &y : board) {
         for (int x = 0; x < COLUMNS - 1; x++) {
             cout << y[x] << "  |  ";
         }
@@ -43,7 +46,7 @@ void Board::printBoard() {
  */
 bool Board::lookForWinner(char mark) {
     //Check horizontals
-    for (auto & y : board) {
+    for (auto &y : board) {
         for (int x = 0; x < COLUMNS - 3; x++) {
             if (y[x] == y[x + 1] && y[x + 1] == y[x + 2]
                 && y[x + 2] == y[x + 3] && y[x + 3] == mark) {
@@ -53,7 +56,7 @@ bool Board::lookForWinner(char mark) {
     }
 
     //Check verticals
-    for (int x = 0; x < COLUMNS; x++) {
+    for (auto x = 0; x < COLUMNS; x++) {
         for (int y = 0; y < ROWS - 3; y++) {
             // Check verticals
             if (board[y][x] == board[y + 1][x] && board[y + 1][x] == board[y + 2][x]
@@ -84,49 +87,6 @@ bool Board::lookForWinner(char mark) {
     }
     return false;
 }
-
-/*int Board::check3s(char mark){
-    int num3s = 0;
-    for (int y = 0; y < ROWS; y++) {
-        for (int x = 0; x < COLUMNS - 2; x++) {
-            // Check horizontals
-            if (board[y][x] == board[y][x + 1] && board[y][x + 1] == board[y][x+2]
-                && board[y][x+2]  == mark){
-                num3s++;
-            }
-        }
-    }
-
-    for (int x = 0; x < COLUMNS; x++) {
-        for (int y = 0; y < ROWS - 2; y++) {
-            // Check horizontals
-            if (board[y][x] == board[y + 1][x] && board[y +1 ][x] == board[y +2][x]
-                && board[y +2][x] ==mark) {
-                num3s++;
-            }
-        }
-    }
-
-    for (int y = 0; y < ROWS - 2; y++) {
-        for (int x = 0; x < COLUMNS - 2; x++) {
-            // Check horizontals
-            if (board[y][x] == board[y + 1][x + 1] && board[y +1 ][x + 1] == board[y +2][x+2]
-                && board[y +2][x+2] ==mark){
-                num3s++;
-            }
-        }
-    }
-
-    for (int y = ROWS; y > 2; y--) {
-        for (int x = 0; x < COLUMNS - 3; x++) {
-            if (board[y][x] == board[y - 1][x + 1] && board[y -1][x + 1] == board[y -2][x+2]
-                && board[y-2][x+2] ==mark){
-                num3s++;
-            }
-        }
-    }
-    return num3s;
-}*/
 
 bool Board::spaceIsEmpty(int x, int y) {
     return board[ROWS - y - 1][x] == E;
@@ -168,97 +128,179 @@ double Board::positionPoints() {
 
     for (int x = 0; x < COLUMNS; x++) {
         for (int y = 0; y < ROWS; y++) {
-            if(board[y][x] == X){
+            if (board[y][x] == X) {
                 count = count - rowVal[y] - colVal[x];
-            } else if (board[y][x] == O){
+            } else if (board[y][x] == O) {
                 count = count + rowVal[y] + colVal[x];
             }
         }
     }
 
+    int pieceCounter = 0;
 
-    for(int y = 1; y < ROWS; y++){
-        for(int x = 0; x < COLUMNS - 3; x++){
-            if(board[y][x] == board[y][x + 1] && board[y][x+2] == board[y][x+1]
-            && board[y][x + 3] == E){
-                if(board[y][x] == X){
-                    if(humanTurn == (emptySquares % 2 == 1)){
-                        return 1000;
-                    } //human turn odd wins
-                } else if(board[y][x] == O){
-                    if(!humanTurn == (emptySquares % 2 == 1)){
-                        return -1000;
-                    }
+    int x = 0;
+    for (int y = 0; y < ROWS; y++) {
+        while (x < COLUMNS) {
+            if (board[y][x] == E && board[y][x+1] == E) { //computer token
+                pieceCounter = 0; //no credit when multiple spaces in a row between pieces
+            } else if (board[y][x] == X) {
+                if (pieceCounter <= 0) {
+                    pieceCounter--;
+                } else { //previous token/s were comp tokens so reset
+                    pieceCounter = -1;
+                }
+            } else { // piece=O
+                if (pieceCounter >= 0) {
+                    pieceCounter++;
+                } else { //previous token/s were human tokens so reset
+                    pieceCounter = 1;
                 }
             }
-        }
-    }
-    //threes
-    /*
-    for (auto & y : board) {
-        for (int x = 0; x < COLUMNS - 3; x++) {
-            setOf4[0] = y[x];
-            setOf4[1] = y[x + 1];
-            setOf4[2] = y[x + 2];
-            setOf4[3] = y[x + 3];
-            for (char i : setOf4) {
-                if (i == X) {
-                    count--;
-                } else if (i == O) {
-                    count++;
-                }
+            if (pieceCounter == 3) {
+                count += BONUS3;
+                break;
+            } else if (pieceCounter == -3) {
+                count -= BONUS3;
+                break;
             }
+            x++;
         }
+        x = 0;//reset column
+        pieceCounter = 0;
     }
 
-    for (int x = 0; x < COLUMNS; x++) {
-        for (int y = 0; y < ROWS - 3; y++) {
-            setOf4[0] = board[y][x];
-            setOf4[1] = board[y + 1][x];
-            setOf4[2] = board[y + 2][x];
-            setOf4[3] = board[y + 3][x];
-            for (char i : setOf4) {
-                if (i == X) {
-                    count--;
-                } else if (i == O) {
-                    count++;
+    int y = 0;
+    for (x = 0; x < COLUMNS; x++) {
+        while (y < ROWS) {
+            if (board[y][x] == E) {
+                break;
+            } else if (board[y][x] == X) {
+                if (pieceCounter <= 0) {
+                    pieceCounter--;
+                } else { //previous token/s were comp tokens so reset
+                    pieceCounter = -1;
+                }
+            } else { // = O
+                if (pieceCounter >= 0) {
+                    pieceCounter++;
+                } else { //previous token/s were human tokens so reset
+                    pieceCounter = 1;
                 }
             }
+            if (pieceCounter == 3) {
+                count += BONUS3;
+                break;
+            } else if (pieceCounter == -3) {
+                count -= BONUS3;
+                break;
+            }
+            y++;
         }
+        y = 0;//reset column
+        pieceCounter = 0;
     }
 
-    for (int y = 0; y < ROWS - 3; y++) {
-        for (int x = 0; x < COLUMNS - 3; x++) {
-            setOf4[0] = board[y][x];
-            setOf4[1] = board[y + 1][x + 1];
-            setOf4[2] = board[y + 2][x + 2];
-            setOf4[3] = board[y + 3][x + 3];
-            for (char i : setOf4) {
-                if (i == X) {
-                    count--;
-                } else if (i == O) {
-                    count++;
-                }
-            }
-        }
+    int startRow = ROWS - 1;
+    int startCol = 0;
+    while (startCol < 4) {
+        count += checkDownDiag(startRow, startCol);
+        startCol++;
+    }
+    startCol = 0;
+    while (startRow > 2) {
+        count += checkDownDiag(startRow, startCol);
+        startRow--;
     }
 
-    for (int y = ROWS; y > 3; y--) {
-        for (int x = 0; x < COLUMNS - 3; x++) {
-            setOf4[0] = board[y][x];
-            setOf4[1] = board[y - 1][x + 1];
-            setOf4[2] = board[y - 2][x + 2];
-            setOf4[3] = board[y - 3][x + 3];
-            for (char i : setOf4) {
-                if (i == X) {
-                    count--;
-                } else if (i == O) {
-                    count++;
-                }
-            }
-        }
-    } */
+    startRow = ROWS - 1;
+    startCol = COLUMNS - 1;
+    while (startCol > 2) {
+        count += checkUpDiag(startRow, startCol);
+        startCol--;
+    }
+    startCol = COLUMNS - 1;
+    while (startRow > 2) {
+        count += checkUpDiag(startRow, startCol);
+        startRow--;
+    }
+
     return count;
 }
 
+
+int Board::getEmptySquares() {
+    return emptySquares;
+}
+
+
+int Board::checkDownDiag(int y, int x) {
+    int pieceCounter = 0;
+    int count = 0;
+
+    while (x < COLUMNS && y >= 0) {
+        if(y < 2 && pieceCounter==0){
+            break;
+        }
+        if (board[y][x] == O) { //computer token
+            if (pieceCounter >= 0) {
+                pieceCounter++;
+            } else { //previous token/s were human tokens so reset
+                pieceCounter = 1;
+            }
+        } else if (board[y][x] == X) {
+            if (pieceCounter <= 0) {
+                pieceCounter--;
+            } else { //previous token/s were comp tokens so reset
+                pieceCounter = -1;
+            }
+        } else if (board[y - 1][x + 1] == E) {
+            pieceCounter = 0;
+        }
+        if (pieceCounter == 3) {
+            count += BONUS3;
+            break;
+        } else if (pieceCounter == -3) {
+            count -= BONUS3;
+            break;
+        }
+        x++;
+        y--;
+    }
+    return count;
+}
+
+int Board::checkUpDiag(int y, int x) {
+    int pieceCounter = 0;
+    int count = 0;
+    while (x >= 0 && y >= 0) {
+        if(y<2 && pieceCounter==0){//can't get3 in a row
+            break;
+        }
+        if (board[y][x] == O) { //computer token
+            if (pieceCounter >= 0) {
+                pieceCounter++;
+            } else { //previous token/s were human tokens so reset
+                pieceCounter = 1;
+            }
+        } else if (board[y][x] == X) {
+            if (pieceCounter <= 0) {
+                pieceCounter--;
+            } else { //previous token/s were comp tokens so reset
+                pieceCounter = -1;
+            }
+        } else if (board[y - 1][x - 1] == E) {
+            pieceCounter = 0;
+        }
+        if (pieceCounter == 3) {
+            count += BONUS3;
+            break;
+        } else if (pieceCounter == -3) {
+            count -= BONUS3;
+            break;
+        }
+        x--;
+        y--;
+    }
+    return count;
+}
 
