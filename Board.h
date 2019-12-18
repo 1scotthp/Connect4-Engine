@@ -1,5 +1,5 @@
 //
-// Created by 1scot on 5/29/2019.
+// Created by Scott Phillips on 5/29/2019.
 //
 
 #ifndef CONNECT4_BOARD_H
@@ -10,6 +10,7 @@
 #include <vector>
 
 using namespace std;
+
 
 class Board {
 
@@ -38,12 +39,20 @@ public:
 
     double positionPoints();
 
+    int getEmptySquares();
+
 private:
     char board[ROWS][COLUMNS];//x is used for col# and y for row# in th{}is program
     int emptySquares = 42;//bad style
 
     int rowVal[6] = {1,2,2,1,0,0};
     int colVal[7] = {0,1,2,3,2,1,0};
+
+    int checkDownDiag(int y, int x);
+    int checkUpDiag(int y, int x);
+
+    static const int BONUS3 = 20;
+
 };
 
 
